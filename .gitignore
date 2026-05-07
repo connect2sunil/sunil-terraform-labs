@@ -1,0 +1,13 @@
+# Terraform state — contains resource IDs and can contain secrets
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+*.tfvars
+
+.terraform/
+.terraform.lock.hcl
+
+# Crash logs
+crash.log
+crash.*.log
