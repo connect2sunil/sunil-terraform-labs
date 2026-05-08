@@ -9,7 +9,7 @@ terraform {
   }
 }
 provider "aws" {
-  region = var.aws_region   # reads from variables.tf
+  region = var.aws_region  
 
   default_tags {
     tags = {
