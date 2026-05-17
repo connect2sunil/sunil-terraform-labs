@@ -201,22 +201,3 @@ resource "aws_network_acl_rule" "private_outbound_all" {
   to_port        = 0
 }
 
-resource "aws_security_group_rule" "web_alb_ssh_in" {
-  type              = "ingress"
-  from_port         = 22
-  to_port           = 22
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.web_alb.id
-  description       = "Temporary SSH - remove after flow logs testing"
-}
-resource "aws_network_acl_rule" "public_inbound_ssh" {
-  network_acl_id = aws_network_acl.public.id
-  rule_number    = 130
-  egress         = false
-  protocol       = "tcp"
-  rule_action    = "allow"
-  cidr_block     = "0.0.0.0/0"
-  from_port      = 22
-  to_port        = 22
-}
