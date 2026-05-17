@@ -37,3 +37,18 @@ output "sg_db_id" {
   description = "ID of the db tier security group"
   value       = aws_security_group.db.id
 }
+
+output "alb_dns_name" {
+  description = "DNS name of the ALB — paste this in a browser to test"
+  value       = aws_lb.app.dns_name
+}
+
+output "alb_arn" {
+  description = "ARN of the ALB"
+  value       = aws_lb.app.arn
+}
+
+output "app_instance_ids" {
+  description = "IDs of the EC2 app instances"
+  value       = aws_instance.app[*].id
+}

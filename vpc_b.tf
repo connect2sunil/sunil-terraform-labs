@@ -41,12 +41,67 @@ resource "aws_route_table_association" "vpc_b_private" {
 # ═══════════════════════════════════════════════════════════
 
 resource "aws_ec2_transit_gateway" "main" {
-  description =  "Main TGW - connects VPC A and VPC B"
+  description                     = "Main TGW - connects VPC A and VPC B"
   auto_accept_shared_attachments  = "enable"
   default_route_table_association = "enable"
   default_route_table_propagation = "enable"
-tags = {
-  Name = "tgw-${var.environment}"
+  tags = {
+    Name = "tgw-${var.environment}"
+  }
+
 }
 
+resource "aws_ec2_transit_gateway_vpc_attachment" "vpc_a" {
+  transit_gateway_id = aws_ec2_transit_gateway.main.id
+  vpc_id             = aws_vpc.main.id
+  # Subnets where TGW creates ENIs — one per AZ for resilience
+  # Use private subnets — TGW ENIs should not be in public subnets
+  subnet_ids = [
+    aws_subnet.private[0].id,
+    aws_subnet.private[1].id,
+  ]
+  tags = {
+    Name = "tgw-attachment-vpc-a-${var.environment}"
+  }
+}
+
+resource "aws_ec2_transit_gateway_vpc_attachment" "vpc_b" {
+  transit_gateway_id = aws_ec2_transit_gateway.main.id
+  vpc_id             = aws_vpc.vpc_b.id
+  subnet_ids = [
+    aws_subnet.vpc_b_private[0].id,
+    aws_subnet.vpc_b_private[1].id,
+  ]
+
+  tags = {
+    Name = "tgw-attachment-vpc-b-${var.environment}"
+  }
+}
+
+# ═══════════════════════════════════════════════════════════
+# ROUTES — tell each VPC how to reach the other via TGW
+# ═══════════════════════════════════════════════════════════
+
+# Route in VPC A private route tables — to reach VPC B, use TGW
+resource "aws_route" "vpc_a_to_vpc_b_az_a" {
+  route_table_id         = aws_route_table.private_az_a.id
+  destination_cidr_block = var.vpc_b_cidr # 10.1.0.0/16
+  transit_gateway_id     = aws_ec2_transit_gateway.main.id
+  depends_on             = [aws_ec2_transit_gateway_vpc_attachment.vpc_a]
+
+}
+
+resource "aws_route" "vpc_a_to_vpc_b_az_b" {
+  route_table_id         = aws_route_table.private_az_b.id
+  destination_cidr_block = var.vpc_b_cidr
+  transit_gateway_id     = aws_ec2_transit_gateway.main.id
+  depends_on             = [aws_ec2_transit_gateway_vpc_attachment.vpc_a]
+}
+
+# Route in VPC B route table — to reach VPC A, use TGW
+resource "aws_route" "vpc_b_to_vpc_a" {
+  route_table_id         = aws_route_table.vpc_b_private.id
+  destination_cidr_block = var.vpc_cidr # 10.0.0.0/16 — VPC A CIDR
+  transit_gateway_id     = aws_ec2_transit_gateway.main.id
+  depends_on             = [aws_ec2_transit_gateway_vpc_attachment.vpc_b]
 }

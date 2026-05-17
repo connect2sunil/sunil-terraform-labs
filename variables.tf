@@ -53,3 +53,17 @@ variable "domain_name" {
   description = "private hosted zone domain name for Route 53"
   default     = "internal.sunil-labs.com"
 }
+
+# EC2 instance type for app tier targets
+variable "instance_type" {
+  description = "EC2 instance type for app tier"
+  type        = string
+  default     = "t3.micro"
+}
+
+# Amazon Linux 2023 AMI for ap-southeast-2 — update if stale
+variable "ami_id" {
+  description = "Amazon Linux 2023 AMI ID for ap-southeast-2"
+  type        = string
+  default     = "ami-0c6c64795de24c2c2"  # AL2023 Sydney — check AWS console for latest
+}
